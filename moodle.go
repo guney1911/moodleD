@@ -12,7 +12,7 @@ import (
 
 func main() {
 	boolptr := flag.Bool("login", false, "-login : start the login wizard")
-	refresh := flag.Int("refresh", 1, "-refresh=xx : refresh every xx minutes. Default is 360min/6h.")
+	refresh := flag.Int("refresh", 60, "-refresh=xx : refresh every xx minutes. Default is 360min/6h.")
 	flag.Parse()
 	if *boolptr {
 		login()
