@@ -91,23 +91,15 @@ func (api *Api) getEvents(t time.Time) []eventData {
 	if IDStore == nil {
 		IDStore = make([]int, 0)
 	}
-
-	s := fmt.Sprintf("%s/webservice/rest/server.php?wstoken=%s&moodlewsrestformat=json", api.Base, api.Token)
-	u, err := url.Parse(s)
-	assertErr(err)
-	q := u.Query()
-	q.Set("wsfunction", "core_calendar_get_calendar_day_view")
-	q.Set("year", strconv.Itoa(t.Year()))
-	q.Set("month", strconv.Itoa(int(t.Month())))
-	q.Set("day", strconv.Itoa(t.Day()))
-	u.RawQuery = q.Encode()
-	resp, err := http.Get(u.String())
-	assertErr(err)
-	buffer, err := ioutil.ReadAll(resp.Body)
-	assertErr(err)
-	resp.Body.Close()
+	arguments := map[string]string{
+		"year":  strconv.Itoa(t.Year()),
+		"month": strconv.Itoa(int(t.Month())),
+		"day":   strconv.Itoa(t.Day()),
+	}
+	buffer := api.request("core_calendar_get_calendar_day_view", arguments)
+	fmt.Println(string(buffer))
 	var d events
-	err = json.Unmarshal(buffer, &d)
+	err := json.Unmarshal(buffer, &d)
 	assertErr(err)
 	eventDataSlice := make([]eventData, 0)
 	for _, e := range d.Events {
@@ -123,6 +115,24 @@ func (api *Api) getEvents(t time.Time) []eventData {
 		}
 	}
 	return eventDataSlice
+}
+
+func (api *Api) request(verb string, arguments map[string]string) []byte {
+	s := fmt.Sprintf("%s/webservice/rest/server.php?wstoken=%s&moodlewsrestformat=json", api.Base, api.Token)
+	u, err := url.Parse(s)
+	assertErr(err)
+	q := u.Query()
+	q.Set("wsfunction", verb)
+	for k, v := range arguments {
+		q.Set(k, v)
+	}
+	u.RawQuery = q.Encode()
+	resp, err := http.Get(u.String())
+	assertErr(err)
+	buffer, err := ioutil.ReadAll(resp.Body)
+	assertErr(err)
+	resp.Body.Close()
+	return buffer
 }
 
 func contains(s []int, e int) bool {
